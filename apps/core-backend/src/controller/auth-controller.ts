@@ -48,13 +48,17 @@ export const signup = async (req: Request, res: Response) => {
     // lands first never throws a unique-constraint error because of the other.
     await prisma.user.upsert({
         where: { id: payload.userId },
-        update: { isAdmin },
+        update: {
+            isAdmin,
+            ...(isAdmin ? { isVerified: true } : {})
+        },
         create: {
             id: payload.userId,
             username: payload.username,
             email: payload.email,
             passwordHash: passwordHash,
-            isAdmin
+            isAdmin,
+            isVerified: isAdmin
         }
     })
 

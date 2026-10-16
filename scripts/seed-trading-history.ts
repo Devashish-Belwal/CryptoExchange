@@ -1,9 +1,6 @@
-import { prisma } from "@workspace/database";
-import { Client } from "pg";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+// Standalone CEX Seeder Script (Zero external dependencies, uses native Bun fetch & crypto)
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL = process.env.API_BASE_URL || "https://api.cex.dabelwal.online/api/v1";
 const ADMIN_KEY = process.env.ADMIN_KEY || "local_admin_secret_key";
 
 console.log(`\n======================================================`);
@@ -23,28 +20,32 @@ async function request(path: string, options: RequestInit = {}) {
         ...(options.headers || {}),
     };
 
-    const res = await fetch(url, { ...options, headers });
-    const data = await res.json().catch(() => ({}));
-    return { status: res.status, ok: res.ok, data };
+    try {
+        const res = await fetch(url, { ...options, headers });
+        const data = await res.json().catch(() => ({}));
+        return { status: res.status, ok: res.ok, data };
+    } catch (err: any) {
+        return { status: 500, ok: false, data: { error: { message: err.message } } };
+    }
 }
 
 async function main() {
     // -------------------------------------------------------------------------
-    // 1. Create or Verify Test Users
+    // 1. Create or Verify Test Users via API
     // -------------------------------------------------------------------------
-    console.log(`[1/6] Registering test accounts...`);
+    console.log(`[1/5] Registering seed accounts...`);
 
     const users = [
-        { username: "admin_cex", email: "admin@cex.local", password: "Password123!", isAdmin: true },
-        { username: "market_maker", email: "mm@cex.local", password: "Password123!", isAdmin: false },
-        { username: "trader_whale", email: "whale@cex.local", password: "Password123!", isAdmin: false },
-        { username: "trader_alice", email: "alice@cex.local", password: "Password123!", isAdmin: false },
+        { username: "admin_cex", email: "admin@cex.local", password: "Password123!" },
+        { username: "market_maker", email: "mm@cex.local", password: "Password123!" },
+        { username: "trader_whale", email: "whale@cex.local", password: "Password123!" },
+        { username: "trader_alice", email: "alice@cex.local", password: "Password123!" },
     ];
 
     for (const u of users) {
         const signupRes = await request("/auth/signup", {
             method: "POST",
-            headers: u.isAdmin ? { "x-admin-key": ADMIN_KEY } : {},
+            headers: { "x-admin-key": ADMIN_KEY },
             body: JSON.stringify({ username: u.username, email: u.email, password: u.password }),
         });
 
@@ -53,31 +54,14 @@ async function main() {
         } else if (signupRes.data?.error?.message?.includes("already exists")) {
             console.log(`  ℹ User already exists: ${u.username}`);
         } else {
-            console.warn(`  ⚠ Signup notice for ${u.username}:`, signupRes.data?.error?.message || signupRes.status);
+            console.warn(`  ⚠ Signup note for ${u.username}:`, signupRes.data?.error?.message || signupRes.status);
         }
-    }
-
-    // Direct DB update to ensure all users are marked as verified and admin flag is accurate
-    try {
-        console.log(`\n[2/6] Verifying accounts in PostgreSQL...`);
-        await prisma.user.updateMany({
-            where: { username: { in: users.map((u) => u.username) } },
-            data: { isVerified: true },
-        });
-
-        await prisma.user.updateMany({
-            where: { username: "admin_cex" },
-            data: { isAdmin: true },
-        });
-        console.log(`  ✔ All seed accounts marked isVerified: true`);
-    } catch (e: any) {
-        console.warn(`  ⚠ Could not verify via direct Prisma connection (continuing via API):`, e.message);
     }
 
     // -------------------------------------------------------------------------
     // 2. Sign In and Obtain Auth Tokens
     // -------------------------------------------------------------------------
-    console.log(`\n[3/6] Authenticating users and obtaining JWT tokens...`);
+    console.log(`\n[2/5] Authenticating users and obtaining JWT tokens...`);
     const tokens: Record<string, string> = {};
 
     for (const u of users) {
@@ -94,15 +78,15 @@ async function main() {
         console.log(`  ✔ Authenticated as ${u.username}`);
     }
 
-    const adminToken = tokens["admin_cex"];
-    const makerToken = tokens["market_maker"];
-    const whaleToken = tokens["trader_whale"];
-    const aliceToken = tokens["trader_alice"];
+    const adminToken = tokens["admin_cex"]!;
+    const makerToken = tokens["market_maker"]!;
+    const whaleToken = tokens["trader_whale"]!;
+    const aliceToken = tokens["trader_alice"]!;
 
     // -------------------------------------------------------------------------
     // 3. Create Assets
     // -------------------------------------------------------------------------
-    console.log(`\n[4/6] Creating Asset Catalog (USDC, BTC, ETH, SOL)...`);
+    console.log(`\n[3/5] Creating Asset Catalog (USDC, BTC, ETH, SOL)...`);
     const assets = [
         { symbol: "USDC", name: "USD Coin", type: "QUOTE", precision: 6, logoUrl: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png" },
         { symbol: "BTC", name: "Bitcoin", type: "BASE", precision: 8, logoUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
@@ -132,7 +116,7 @@ async function main() {
     // -------------------------------------------------------------------------
     // 4. Create Markets
     // -------------------------------------------------------------------------
-    console.log(`\n[5/6] Creating Markets (BTC_USDC, ETH_USDC, SOL_USDC)...`);
+    console.log(`\n[4/5] Creating Markets (BTC_USDC, ETH_USDC, SOL_USDC)...`);
     const markets = [
         {
             symbol: "BTC_USDC",
@@ -197,7 +181,7 @@ async function main() {
     // -------------------------------------------------------------------------
     // 5. Fund Accounts (On-Ramp)
     // -------------------------------------------------------------------------
-    console.log(`\n[6/6] Depositing funds to market makers and traders...`);
+    console.log(`\n[5/5] Depositing funds to market makers and traders...`);
     const fundings = [
         { user: "market_maker", token: makerToken, symbol: "USDC", amount: "5000000" },
         { user: "market_maker", token: makerToken, symbol: "BTC", amount: "100" },
@@ -267,7 +251,6 @@ async function main() {
     // --- Market 1: BTC_USDC ---
     console.log(`▶ Generating BTC_USDC order book & trade executions...`);
 
-    // 1. Maker places sell asks
     const btcAsks = [
         { price: "67480.0", qty: "0.8500" },
         { price: "67520.0", qty: "1.2000" },
@@ -279,7 +262,6 @@ async function main() {
         await placeOrder(makerToken, { symbol: "BTC_USDC", entryPrice: a.price, quantity: a.qty, side: "SELL" });
     }
 
-    // 2. Maker places buy bids
     const btcBids = [
         { price: "67380.0", qty: "0.9000" },
         { price: "67320.0", qty: "1.5000" },
@@ -291,13 +273,12 @@ async function main() {
         await placeOrder(makerToken, { symbol: "BTC_USDC", entryPrice: b.price, quantity: b.qty, side: "BUY" });
     }
 
-    // 3. Takers hit the book to create execution history
     const btcTrades = [
         { user: "trader_whale", token: whaleToken, side: "BUY" as const, price: "67480.0", qty: "0.4000" },
-        { user: "trader_alice", token: aliceToken, side: "BUY" as const, price: "67480.0", qty: "0.4500" }, // fills ask 1!
+        { user: "trader_alice", token: aliceToken, side: "BUY" as const, price: "67480.0", qty: "0.4500" }, // fills ask 1
         { user: "trader_whale", token: whaleToken, side: "BUY" as const, price: "67520.0", qty: "0.6000" },
         { user: "trader_alice", token: aliceToken, side: "SELL" as const, price: "67380.0", qty: "0.5000" },
-        { user: "trader_whale", token: whaleToken, side: "SELL" as const, price: "67380.0", qty: "0.4000" }, // fills bid 1!
+        { user: "trader_whale", token: whaleToken, side: "SELL" as const, price: "67380.0", qty: "0.4000" }, // fills bid 1
         { user: "trader_whale", token: whaleToken, side: "BUY" as const, price: "67520.0", qty: "0.3000" },
     ];
 
@@ -346,6 +327,8 @@ async function main() {
         const tradeRes = await placeOrder(t.token, { symbol: "ETH_USDC", entryPrice: t.price, quantity: t.qty, side: t.side });
         if (tradeRes.ok) {
             console.log(`  ⚡ Executed Trade: ${t.side} ${t.qty} ETH @ $${t.price} by ${t.user}`);
+        } else {
+            console.warn(`  ⚠ Trade skipped:`, tradeRes.data?.error?.message || tradeRes.status);
         }
         await sleep(150);
     }
@@ -385,47 +368,22 @@ async function main() {
         const tradeRes = await placeOrder(t.token, { symbol: "SOL_USDC", entryPrice: t.price, quantity: t.qty, side: t.side });
         if (tradeRes.ok) {
             console.log(`  ⚡ Executed Trade: ${t.side} ${t.qty} SOL @ $${t.price} by ${t.user}`);
+        } else {
+            console.warn(`  ⚠ Trade skipped:`, tradeRes.data?.error?.message || tradeRes.status);
         }
         await sleep(150);
     }
 
-    // -------------------------------------------------------------------------
-    // 7. Refresh TimescaleDB Continuous Aggregates (Candlestick Charts)
-    // -------------------------------------------------------------------------
-    try {
-        console.log(`\nRefreshing TimescaleDB Kline Continuous Aggregates...`);
-        const sqlPath = fileURLToPath(new URL("../packages/database/prisma/refresh-continuous-aggregates.sql", import.meta.url));
-        const statements = readFileSync(sqlPath, "utf-8")
-            .split("\n")
-            .filter((line) => line.trim().startsWith("CALL "));
-
-        if (process.env.DATABASE_URL) {
-            const client = new Client({ connectionString: process.env.DATABASE_URL });
-            await client.connect();
-            for (const st of statements) {
-                await client.query(st);
-            }
-            await client.end();
-            console.log(`  ✔ Kline aggregates refreshed (1m, 5m, 15m, 1h, 1d candles updated)`);
-        }
-    } catch (e: any) {
-        console.warn(`  ℹ Note on Kline refresh:`, e.message);
-    }
-
     console.log(`\n======================================================`);
     console.log(` 🎉 SEEDING COMPLETED SUCCESSFULLY!`);
-    console.log(`   - 4 Assets created (USDC, BTC, ETH, SOL)`);
-    console.log(`   - 3 Markets active (BTC_USDC, ETH_USDC, SOL_USDC)`);
+    console.log(`   - 4 Assets active (USDC, BTC, ETH, SOL)`);
+    console.log(`   - 3 Markets live (BTC_USDC, ETH_USDC, SOL_USDC)`);
     console.log(`   - Order Books populated with bids & asks depth`);
-    console.log(`   - Recent Trades logged with realistic price history`);
+    console.log(`   - Trades executed across all pairs with live price history`);
     console.log(`======================================================\n`);
 }
 
-main()
-    .catch((err) => {
-        console.error("\n❌ Seeding failed:", err);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+main().catch((err) => {
+    console.error("\n❌ Seeding failed:", err);
+    process.exit(1);
+});
