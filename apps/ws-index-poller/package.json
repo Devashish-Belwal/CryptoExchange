@@ -1,0 +1,27 @@
+{
+  "name": "ws-poller",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "bun --watch src/index.ts",
+    "lint": "tsc --noEmit && eslint \"src/**/*.ts*\" --max-warnings 0",
+    "start": "bun src/index.ts",
+    "test": "jest --detectOpenHandles"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@workspace/eslint-config": "workspace:*",
+    "eslint": "^9"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@workspace/redis-streams": "workspace:*",
+    "@workspace/shared": "*",
+    "dotenv": "^17.4.2",
+    "uuid": "^14.0.1"
+  }
+}

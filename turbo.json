@@ -1,0 +1,106 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "concurrency": "12",
+  "globalEnv": [
+    "DATABASE_URL",
+    "NEXT_PUBLIC_BACKEND_URL",
+    "NEXT_PUBLIC_CORE_BACKEND_URL",
+    "NEXT_PUBLIC_CORE_WS_URL",
+    "NEXT_PUBLIC_DEBUG_URL",
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_CORE_URL",
+    "NEXT_PUBLIC_DOCS_URL",
+    "NODE_ENV",
+    "TRADING_ENGINE_URL",
+    "DATABASE_ENGINE_URL",
+    "WS_SERVER_URL",
+    "WS_POLLER_URL",
+    "PROXY_SERVER_URL",
+    "PORT",
+    "WS_PORT",
+    "BACKPACK_REST_URL",
+    "ALLOWED_ORIGINS",
+    "ALLOW_MUTATIONS",
+    "RATE_LIMIT_WINDOW_MS",
+    "RATE_LIMIT_MAX",
+    "WS_SERVER_BATCH_SIZE",
+    "WS_SERVER_BLOCK_TIME_MS",
+    "STALE_AFTER_MS",
+    "FUNDING_INTERVAL_SECONDS",
+    "BINANCE_MARK_PRICE_STREAM_URL",
+    "DATABASE_ENGINE_BATCH_SIZE",
+    "DATABASE_ENGINE_BLOCK_TIME_MS",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "FRONTEND_URL",
+    "JWT_PASSWORD_REFRESH_SECRET",
+    "JWT_OTP_SECRET",
+    "ADMIN_KEY",
+    "RESEND_API_KEY",
+    "MAIL_FROM",
+    "BCRYPT_SALT_ROUNDS",
+    "R2_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET_NAME",
+    "R2_BUCKET_ENDPOINT",
+    "SNAPSHOT_INTERVAL"
+  ],
+  "tasks": {
+    "generate": {
+      "dependsOn": [
+        "^generate"
+      ],
+      "cache": false
+    },
+    "build": {
+      "dependsOn": [
+        "^build",
+        "^generate"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint",
+        "^generate"
+      ]
+    },
+    "format": {
+      "dependsOn": [
+        "^format"
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^typecheck",
+        "^generate"
+      ]
+    },
+    "db:migrate:dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:migrate:deploy": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
+    },
+    "db:seed": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

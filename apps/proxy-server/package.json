@@ -1,0 +1,38 @@
+{
+  "name": "proxy-server",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "dev": "bun --watch src/index.ts",
+    "lint": "tsc --noEmit && eslint \"src/**/*.ts*\" --max-warnings 0",
+    "start": "bun src/index.ts",
+    "test": "jest --detectOpenHandles"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/compression": "^1.8.1",
+    "@workspace/eslint-config": "workspace:*",
+    "eslint": "^9",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/helmet": "^4.0.0",
+    "@types/http-proxy-middleware": "^1.0.0",
+    "@types/morgan": "^1.9.10"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.0",
+    "helmet": "^8.3.0",
+    "http-proxy-middleware": "^4.2.0",
+    "morgan": "^1.11.0",
+    "uuid": "^14.0.1"
+  }
+}

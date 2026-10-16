@@ -1,0 +1,13 @@
+1. core frontend - 3000
+2. docs frontend - 3001
+3. debug frontend - 3002
+
+4. redis - 6379 (docker/docker-compose.dev.yml)
+5. postgres - 5432 (docker/docker-compose.dev.yml, timescale/timescaledb image)
+
+6. core backend - 8080
+7. trading engine - 8081
+8. database server - 8082
+9. ws server - 8083
+10. ws poller - 8084
+11. proxy server - 8085

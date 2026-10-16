@@ -1,0 +1,39 @@
+{
+  "name": "debug-console",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/ui": "workspace:*",
+    "axios": "^1.18.1",
+    "lightweight-charts": "^5.2.0",
+    "lucide-react": "^1.23.0",
+    "next": "16.2.6",
+    "next-themes": "^0.4.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "uuid": "^14.0.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/axios": "^0.14.4",
+    "@types/node": "^26.1.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/uuid": "^11.0.0",
+    "@workspace/eslint-config": "workspace:^",
+    "@workspace/typescript-config": "workspace:*",
+    "@workspace/shared": "workspace:*",
+    "eslint": "^9",
+    "typescript": "^5"
+  }
+}

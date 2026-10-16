@@ -1,0 +1,345 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MarketType {
+  SPOT
+  PERP
+}
+
+enum TransactionSide {
+  DEBIT
+  CREDIT
+  TRANSFER
+}
+
+enum TransactionType {
+  LOCK
+  TRADE
+  TRANSACTION
+  RELEASE
+}
+
+enum AssetType {
+  BASE
+  QUOTE
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  LIMIT
+  MARKET
+}
+
+enum OrderStatus {
+  OPEN
+  PARTIAL_FILLED
+  PARTIAL_REJECTED
+  FILLED
+  CANCELLED
+  REJECTED
+}
+
+enum STPMode {
+  CANCEL_MAKER
+  CANCEL_TAKER
+  CANCEL_BOTH
+}
+
+enum TimeInForce {
+  GTC
+  IOC
+  FOK
+}
+
+enum FillStatus {
+  TRADE
+  STP
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum PositionCloseReason {
+  CLOSED
+  LIQUIDATED
+  ADL
+}
+
+enum FundType {
+  INSURANCE
+  COMMISSION
+}
+
+enum FundTransactionType {
+  TRADE_FEE
+  FUNDING_DEFICIT
+  LIQUIDATION_COVERAGE
+  ADJUSTMENT
+}
+
+model User {
+  id              String   @id @default(uuid())
+  username        String   @unique
+  email           String   @unique
+  passwordHash    String
+  isVerified      Boolean  @default(false)
+  isArchived      Boolean  @default(false)
+  isAdmin         Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  eventSequenceId Int      @default(0)
+
+  passwordResetTokenHash   String?
+  passwordResetTokenExpiry DateTime?
+  singupOTPHash            String?
+  singupOTPExpiry          DateTime?
+
+  sessions            Session[]
+  balances            Balance[]
+  balanceTransactions BalanceTransaction[]
+  orders              Order[]
+  positions           Position[]
+  liquidations        Liquidation[]
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(references: [id], fields: [userId])
+  refreshTokenHash String
+  deviceIP         String
+  userAgent        String
+  revoke           Boolean   @default(false)
+  revokeAt         DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Market {
+  id                  String               @id @default(uuid())
+  symbol              String               @unique
+  name                String
+  marketType          MarketType
+  baseAssetId         String
+  quoteAssetId        String
+  baseAsset           Asset                @relation("BaseAsset", fields: [baseAssetId], references: [symbol])
+  quoteAsset          Asset                @relation("QuoteAsset", fields: [quoteAssetId], references: [symbol])
+  maxLeverage         Int                  @default(1)
+  minOrderSize        String
+  tickSize            String
+  lotSize             String
+  minNotional         String
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  eventSequenceId     Int                  @default(0)
+  balanceTransactions BalanceTransaction[]
+  orders              Order[]
+  trades              Trade[]
+  positions           Position[]
+  liquidations        Liquidation[]
+  funds               Fund[]
+
+  @@index([symbol])
+}
+
+model Asset {
+  id                  String               @id @default(uuid())
+  symbol              String               @unique
+  name                String
+  logoUrl             String?
+  type                AssetType
+  precision           Int
+  isActive            Boolean              @default(true)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  eventSequenceId     Int                  @default(0)
+  baseMarkets         Market[]             @relation("BaseAsset")
+  quoteMarkets        Market[]             @relation("QuoteAsset")
+  balances            Balance[]
+  balanceTransactions BalanceTransaction[]
+
+  @@index([symbol])
+}
+
+model Balance {
+  id              String   @id @default(uuid())
+  symbol          String
+  asset           Asset    @relation(references: [symbol], fields: [symbol])
+  userId          String
+  user            User     @relation(references: [id], fields: [userId])
+  total           String
+  locked          String
+  eventSequenceId Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, symbol])
+  @@index([userId, symbol])
+}
+
+model BalanceTransaction {
+  id              String          @id @default(uuid())
+  symbol          String
+  asset           Asset           @relation(references: [symbol], fields: [symbol])
+  userId          String
+  user            User            @relation(references: [id], fields: [userId])
+  side            TransactionSide
+  type            TransactionType
+  amount          String
+  marketSymbol    String?
+  market          Market?         @relation(references: [symbol], fields: [marketSymbol])
+  orderId         String?
+  order           Order?          @relation(references: [orderId], fields: [orderId])
+  tradeId         String?
+  createdAt       DateTime        @default(now())
+  eventSequenceId Int             @default(0)
+
+  @@index([userId])
+  @@index([orderId])
+}
+
+model Order {
+  id                  String               @id @default(uuid())
+  orderId             String               @unique
+  userId              String
+  user                User                 @relation(references: [id], fields: [userId])
+  symbol              String
+  market              Market               @relation(references: [symbol], fields: [symbol])
+  marketType          MarketType
+  side                OrderSide
+  type                OrderType
+  status              OrderStatus
+  timeInForce         TimeInForce
+  stpMode             STPMode
+  postOnly            Boolean              @default(false)
+  reduceOnly          Boolean              @default(false)
+  liquidation         Boolean              @default(false)
+  entryPrice          String
+  quantity            String
+  remainingQuantity   String
+  filledQuantity      String               @default("0")
+  averagePrice        String               @default("0")
+  leverage            Int?
+  margin              String?
+  takerTrades         Trade[]              @relation("TakerOrder")
+  makerTrades         Trade[]              @relation("MakerOrder")
+  balanceTransactions BalanceTransaction[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  eventSequenceId     Int                  @default(0)
+
+  @@index([userId, symbol])
+  @@index([userId, status])
+  @@index([symbol, status])
+}
+
+model Trade {
+  id           String     @id @default(uuid())
+  tradeId      Int
+  symbol       String
+  market       Market     @relation(references: [symbol], fields: [symbol])
+  price        String
+  quantity     String
+  side         OrderSide
+  status       FillStatus @default(TRADE)
+  takerOrderId String
+  takerOrder   Order      @relation("TakerOrder", references: [orderId], fields: [takerOrderId])
+  takerUserId  String
+  takerFee     String     @default("0")
+  makerOrderId String
+  makerOrder   Order      @relation("MakerOrder", references: [orderId], fields: [makerOrderId])
+  makerUserId  String
+  makerFee     String     @default("0")
+  createdAt    DateTime   @default(now())
+
+  @@unique([symbol, tradeId])
+  @@index([takerUserId])
+  @@index([makerUserId])
+  @@index([symbol, createdAt])
+}
+
+model TradeTick {
+  id        BigInt   @default(autoincrement())
+  symbol    String
+  price     String
+  quantity  String
+  createdAt DateTime
+
+  @@id([id, createdAt])
+  @@index([symbol, createdAt])
+  @@index([createdAt])
+}
+
+model Position {
+  id              String              @id @default(uuid())
+  positionId      String              @unique
+  userId          String
+  user            User                @relation(references: [id], fields: [userId])
+  symbol          String
+  market          Market              @relation(references: [symbol], fields: [symbol])
+  side            PositionSide
+  leverage        Int
+  entryPrice      String
+  exitPrice       String
+  quantity        String
+  margin          String
+  realizedPnl     String
+  closeReason     PositionCloseReason
+  openedAt        DateTime
+  closedAt        DateTime            @default(now())
+  liquidation     Liquidation?
+  eventSequenceId Int                 @default(0)
+
+  @@index([userId, symbol])
+  @@index([symbol, closedAt])
+}
+
+model Liquidation {
+  id               String   @id @default(uuid())
+  positionId       String   @unique
+  position         Position @relation(references: [positionId], fields: [positionId])
+  userId           String
+  user             User     @relation(references: [id], fields: [userId])
+  symbol           String
+  market           Market   @relation(references: [symbol], fields: [symbol])
+  bankruptcyPrice  String
+  liquidationPrice String
+  markPrice        String
+  deficit          String   @default("0")
+  insuranceCovered String   @default("0")
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([symbol, createdAt])
+}
+
+model Fund {
+  id              String   @id @default(uuid())
+  symbol          String
+  market          Market   @relation(references: [symbol], fields: [symbol])
+  type            FundType
+  balance         String   @default("0")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  eventSequenceId Int      @default(0)
+
+  @@unique([symbol, type])
+}
