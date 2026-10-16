@@ -229,7 +229,7 @@ export const resendOTP = async (req: Request, res: Response) => {
         })
 
         const otpResetToken = jwt.sign({ userId: user.id }, envConfig.JWT_OTP_SECRET, { expiresIn: "15m" });
-        const verifyLink = `${envConfig.FRONTEND_URL}/signup?token=${otpResetToken}&action=verify-otp`;
+        const verifyLink = `${envConfig.PRIMARY_FRONTEND_URL}/signup?token=${otpResetToken}&action=verify-otp`;
 
         await sendOTPEmail(user.email, otp, verifyLink);
     }
@@ -313,7 +313,7 @@ export const forgetPassword = async (req: Request, res: Response) => {
             }
         });
 
-        const resetLink = `${envConfig.FRONTEND_URL}/signup?token=${passwordResetToken}&action=reset-password`;
+        const resetLink = `${envConfig.PRIMARY_FRONTEND_URL}/signup?token=${passwordResetToken}&action=reset-password`;
 
         await sendPasswordResetEmail(user.email, resetLink);
     }
