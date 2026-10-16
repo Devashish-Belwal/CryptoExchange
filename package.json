@@ -7,7 +7,8 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "turbo format",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "seed:history": "bun scripts/seed-trading-history.ts"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
