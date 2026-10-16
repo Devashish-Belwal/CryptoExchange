@@ -45,6 +45,7 @@ services:
       - ../.env.production
     environment:
       <<: [*database-env, *redis-env]
+      PORT: "8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,6 +71,7 @@ services:
       - ../.env.production
     environment:
       <<: [*database-env, *redis-env]
+      PORT: "8082"
     depends_on:
       postgres:
         condition: service_healthy
