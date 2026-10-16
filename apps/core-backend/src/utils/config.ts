@@ -47,7 +47,7 @@ const envConfig = {
     JWT_PASSWORD_REFRESH_SECRET: process.env.JWT_PASSWORD_REFRESH_SECRET,
     JWT_OTP_SECRET: process.env.JWT_OTP_SECRET,
     FRONTEND_URL: process.env.FRONTEND_URL,
-    PRIMARY_FRONTEND_URL: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",")[0].trim() : "",
+    PRIMARY_FRONTEND_URL: process.env.FRONTEND_URL?.split(",")[0]?.trim() ?? "",
     ADMIN_KEY: process.env.ADMIN_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     MAIL_FROM: process.env.MAIL_FROM,
