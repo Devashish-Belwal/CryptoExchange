@@ -16,8 +16,6 @@ export const getHealthUpdate = async (): Promise<HealthCheckResult[]> => {
                 const latency = Date.now() - startedAt;
                 const checkedAt = new Date().toISOString();
 
-                if (name === "core-frontend") console.log(res.data);
-
                 if (name === "postgres") {
                     const databaseConnected = res.data?.databaseConnected === true;
 

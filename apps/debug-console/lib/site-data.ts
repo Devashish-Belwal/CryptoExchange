@@ -65,8 +65,6 @@ export type SERVICES_NAME =
     | "redis-stream"
     | "postgres"
     | "R2 bucket"
-    | "core-frontend"
-    | "docs-frontend"
     | "debug-frontend"
 
 export const HEALTH_CHECKS: {
@@ -125,18 +123,6 @@ export const HEALTH_CHECKS: {
         name: "R2 bucket",
         description: "Snapshot R2 bucket",
         href: `${ClientConfig.BACKEND_URL}/engine/ready`
-
-    },
-    {
-        name: "core-frontend",
-        description: "trading frontend",
-        href: `${ClientConfig.CORE_URL}`
-
-    },
-    {
-        name: "docs-frontend",
-        description: "API documentation",
-        href: `${ClientConfig.DOCS_URL}`
 
     },
     {

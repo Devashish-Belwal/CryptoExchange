@@ -37,8 +37,6 @@ deep-dive on the engine itself (order creation, liquidation/ADL, funding settlem
 | [`ws-server`](apps/ws-server) | `8083` | `/alive` | `/ready` | WebSocket fan-out of engine updates to browser clients |
 | [`ws-index-poller`](apps/ws-index-poller) | `8084` | `/alive` | `/ready` | Binance mark-price feed + hourly funding-rate scheduler |
 | [`proxy-server`](apps/proxy-server) | `8085` | `/alive` | `/ready` | Reverse proxy to Backpack Exchange's public REST API |
-| [`core-frontend`](apps/core-frontend) | `3000` | – | – | Public-facing web app (Next.js) |
-| [`docs-frontend`](apps/docs-frontend) | `3001` | – | – | Docs site (Next.js) |
 | [`debug-console`](apps/debug-console) | `3002` | – | – | Internal terminal-styled debug UI (Next.js) |
 
 Every backend service exposes the same two health routes for container orchestration:
@@ -67,8 +65,6 @@ exact response shapes.
 │   ├── ws-server/               WebSocket broadcast gateway
 │   ├── ws-index-poller/        Binance mark-price + funding-rate poller
 │   ├── proxy-server/            reverse proxy to Backpack Exchange
-│   ├── core-frontend/          public web app (Next.js)
-│   ├── docs-frontend/          docs site (Next.js)
 │   ├── debug-console/          internal debug UI (Next.js)
 │   └── integration-tests/      end-to-end test suite (not part of this repo's history/remote)
 ├── packages/
@@ -139,13 +135,13 @@ cp .env.example .env   # if present, otherwise set DATABASE_URL directly
 bunx prisma migrate deploy
 ```
 
-### Frontends
+### Frontend (Debug Console)
 
 ```bash
-bun run dev   # runs `turbo dev` for every app, including the three Next.js frontends
+bun run dev   # runs turbo dev for every app, including debug-console
 ```
 
-or target one app: `bun run --cwd apps/core-frontend dev`.
+or target the debug console: `bun run --cwd apps/debug-console dev`.
 
 ## Environment variables
 
