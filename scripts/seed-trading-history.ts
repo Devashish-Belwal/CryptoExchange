@@ -80,7 +80,11 @@ async function main() {
         }
 
         tokens[u.username] = signinRes.data.data.token;
-        console.log(`  ✔ Authenticated as ${u.username}`);
+        const isAdmin = signinRes.data.data.user?.isAdmin;
+        console.log(`  ✔ Authenticated as ${u.username}${isAdmin ? " (Admin: true)" : ""}`);
+        if (u.username === "admin_cex" && !isAdmin) {
+            console.warn(`  ⚠ WARNING: admin_cex does not have isAdmin: true in the database!`);
+        }
     }
 
     const adminToken = tokens["admin_cex"]!;
@@ -246,7 +250,7 @@ async function main() {
                 postOnly: false,
                 reduceOnly: false,
                 stpMode: "CANCEL_MAKER",
-                timeInForce: "GTC",
+                timeInForce: "Good_Till_Cancel",
             }),
         });
 
