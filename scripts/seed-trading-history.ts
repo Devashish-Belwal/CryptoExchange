@@ -46,7 +46,12 @@ async function main() {
         const signupRes = await request("/auth/signup", {
             method: "POST",
             headers: { "x-admin-key": ADMIN_KEY },
-            body: JSON.stringify({ username: u.username, email: u.email, password: u.password }),
+            body: JSON.stringify({
+                username: u.username,
+                email: u.email,
+                password: u.password,
+                confirmPassword: u.password,
+            }),
         });
 
         if (signupRes.ok) {
@@ -200,7 +205,7 @@ async function main() {
     ];
 
     for (const f of fundings) {
-        const rampRes = await request("/auth/onramp", {
+        const rampRes = await request("/auth/on-ramp", {
             method: "POST",
             headers: { Authorization: f.token },
             body: JSON.stringify({ symbol: f.symbol, amount: f.amount }),
